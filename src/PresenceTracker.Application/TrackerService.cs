@@ -94,7 +94,7 @@ public sealed class TrackerService(ITrackerRepository repository, PresenceCalcul
             var networkEvents = data.NetworkEvents.Where(e => e.Date == date).OrderBy(e => e.OccurredAt).ToArray();
             var planned = date >= today && data.Plans.Any(p => p.Date == date);
             var outcome = calculator.EvaluateDay(date, data.Snapshot.WorkingDays, holiday,
-                classification, attendance, planned);
+                classification, attendance, planned, today);
             days.Add(new DayViewData(outcome, attendance, networkEvents));
         }
         return new MonthViewData(data, metrics, days);

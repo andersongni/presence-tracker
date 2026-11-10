@@ -57,7 +57,7 @@ internal static class UiTheme
                     {
                         "presence" => (Color.FromArgb(28, 66, 48), Color.FromArgb(145, 226, 178)),
                         "plan" => (Color.FromArgb(34, 55, 88), Color.FromArgb(150, 190, 255)),
-                        "absence" => (Color.FromArgb(69, 54, 31), Color.FromArgb(255, 210, 130)),
+                        "absence" => (Color.FromArgb(43, 55, 68), Color.FromArgb(165, 180, 197)),
                         _ => (surface, text)
                     };
                 }
@@ -67,7 +67,7 @@ internal static class UiTheme
                     {
                         "presence" => (Color.FromArgb(226, 247, 234), Color.FromArgb(27, 130, 76)),
                         "plan" => (Color.FromArgb(231, 241, 255), Color.FromArgb(20, 100, 210)),
-                        "absence" => (Color.FromArgb(255, 242, 223), Color.FromArgb(177, 111, 0)),
+                        "absence" => (Color.FromArgb(235, 239, 244), Color.FromArgb(93, 112, 133)),
                         _ => (surface, text)
                     };
                 }

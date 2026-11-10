@@ -13,11 +13,13 @@ internal sealed class HistoryForm : Form
         Size = new Size(620, 540);
         MinimumSize = new Size(540, 420);
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 1, RowCount = 3 };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(root);
-        root.Controls.Add(new Label { Text = "Meses encerrados", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 16, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
+        var title = new Label { Text = "Meses encerrados", Dock = DockStyle.Top, Font = new Font("Segoe UI", 16, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0, 0, 0, 8) };
+        UiLayout.BindWrappingLabel(title, 32);
+        root.Controls.Add(title, 0, 0);
         var list = new ListView { Dock = DockStyle.Fill, View = View.Details, FullRowSelect = true, GridLines = true };
         list.Columns.Add("Mês", 185);
         list.Columns.Add("Presenças", 105);
@@ -27,8 +29,8 @@ internal sealed class HistoryForm : Form
         var footerPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
         footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        var footer = new Label { Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, UseCompatibleTextRendering = true };
-        UiLayout.EnableWrapping(footer);
+        var footer = new Label { Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+        UiLayout.BindWrappingLabel(footer, 24);
         var older = new Button { Text = "Meses anteriores…", Dock = DockStyle.Fill, Padding = new Padding(12, 0, 12, 0), MinimumSize = new Size(140, 36) };
         UiLayout.FitButton(older, older.MinimumSize);
         footerPanel.Controls.Add(footer, 0, 0);

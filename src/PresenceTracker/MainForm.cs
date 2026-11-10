@@ -126,16 +126,17 @@ public sealed class MainForm : Form
         shell.Controls.Add(BuildSidebar(), 0, 0);
 
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5, Padding = new Padding(22, 16, 22, 12), Margin = Padding.Empty };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 74));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 130));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 25));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         shell.Controls.Add(root, 1, 0);
 
-        var header = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
+        var header = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2, RowCount = 1, Margin = new Padding(0, 0, 0, 8) };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        header.MinimumSize = new Size(0, 44);
         var monthNavigation = new FlowLayoutPanel
         {
             Dock = DockStyle.Left, AutoSize = true, WrapContents = false,
@@ -160,13 +161,15 @@ public sealed class MainForm : Form
         header.Controls.Add(todayButton, 1, 0);
         root.Controls.Add(header, 0, 0);
 
-        metricCards.Dock = DockStyle.Fill;
+        metricCards.Dock = DockStyle.Top;
+        metricCards.AutoSize = true;
         metricCards.ColumnCount = 4;
         metricCards.RowCount = 1;
         metricCards.Margin = Padding.Empty;
         metricCards.Padding = new Padding(0, 5, 0, 5);
+        metricCards.MinimumSize = new Size(0, 118);
         for (var i = 0; i < 4; i++) metricCards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-        metricCards.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        metricCards.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.Controls.Add(metricCards, 0, 1);
 
         actions.Dock = DockStyle.Fill;
@@ -185,7 +188,7 @@ public sealed class MainForm : Form
         dayDetailsButton.AccessibleName = "Detalhes do dia selecionado";
         dayDetailsButton.Margin = new Padding(0, 4, 6, 4);
         dayDetailsButton.MinimumSize = new Size(96, 40);
-        dayDetailsButton.Height = 40;
+        UiLayout.FitButton(dayDetailsButton, dayDetailsButton.MinimumSize);
         actions.Controls.Add(dayDetailsButton);
         root.Controls.Add(actions, 0, 2);
 
@@ -199,7 +202,7 @@ public sealed class MainForm : Form
         calendar.BackColor = Color.Transparent;
         for (var column = 0; column < 7; column++)
             calendar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / 7));
-        calendar.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+        calendar.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         for (var row = 1; row < 7; row++)
             calendar.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / 6));
         calendarArea.Controls.Add(calendar, 0, 0);
@@ -220,9 +223,9 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(15, 18, 15, 16),
             BackColor = UiTheme.Navy, ForeColor = Color.White, Tag = "brand:sidebar", Margin = Padding.Empty
         };
-        sidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 108));
+        sidebar.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         sidebar.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        sidebar.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
+        sidebar.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         var brand = new Panel { Dock = DockStyle.Fill, BackColor = UiTheme.Navy, Tag = "brand:sidebar" };
         var logo = new Label
@@ -235,20 +238,19 @@ public sealed class MainForm : Form
         {
             Text = "Presence Tracker", Location = new Point(2, 52),
             Font = new Font("Segoe UI", 12, FontStyle.Bold), ForeColor = Color.White, Tag = "brand:sidebar",
-            AutoSize = false, AutoEllipsis = false, TextAlign = ContentAlignment.MiddleLeft,
-            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
-            UseCompatibleTextRendering = true
+            TextAlign = ContentAlignment.MiddleLeft,
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
         brand.Controls.Add(brandTitle);
+        UiLayout.BindWrappingLabel(brandTitle, 32);
         void ResizeBrandTitle()
         {
             brandTitle.Width = Math.Max(0, brand.ClientSize.Width - brandTitle.Left - 2);
-            var needed = UiLayout.MeasureText(brandTitle.Text, brandTitle.Font, brandTitle.Width,
-                TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
-            brandTitle.Height = Math.Max(32, needed.Height + 4);
+            brand.Height = Math.Max(108, brandTitle.Bottom + 12);
         }
         brand.SizeChanged += (_, _) => ResizeBrandTitle();
         ResizeBrandTitle();
+        brand.MinimumSize = new Size(0, 108);
         sidebar.Controls.Add(brand, 0, 0);
 
         var navigation = new FlowLayoutPanel
@@ -268,10 +270,12 @@ public sealed class MainForm : Form
 
         var monitor = new Label
         {
-            Text = "●  Monitoramento ativo\n    Wi-Fi em segundo plano", Dock = DockStyle.Fill,
+            Text = "●  Monitoramento ativo\n    Wi-Fi em segundo plano", Dock = DockStyle.Top,
             TextAlign = ContentAlignment.MiddleLeft, ForeColor = Color.FromArgb(126, 228, 168),
-            Font = new Font("Segoe UI", 8.5F), Tag = "brand:sidebar"
+            Font = new Font("Segoe UI", 8.5F), Tag = "brand:sidebar",
+            Margin = new Padding(12, 8, 12, 12)
         };
+        UiLayout.BindWrappingLabel(monitor, 48);
         sidebar.Controls.Add(monitor, 0, 2);
         return sidebar;
     }
@@ -326,13 +330,13 @@ public sealed class MainForm : Form
         summary.BackColor = UiTheme.Surface;
         summary.Tag = "card";
         summary.CellBorderStyle = TableLayoutPanelCellBorderStyle.None;
-        summary.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-        for (var i = 0; i < 5; i++) summary.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-        summary.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        summary.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var i = 0; i < 5; i++) summary.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        summary.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         summary.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         summary.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        var heading = new Label { Text = "Resumo do mês", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft, UseCompatibleTextRendering = true };
-        UiLayout.EnableWrapping(heading);
+        var heading = new Label { Text = "Resumo do mês", Dock = DockStyle.Top, Font = new Font("Segoe UI", 11, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft };
+        UiLayout.BindWrappingLabel(heading, 28);
         summary.Controls.Add(heading, 0, 0);
         AddSummaryRow(1, "Dias úteis", "workdays");
         AddSummaryRow(2, "Presenças realizadas", "realized");
@@ -348,26 +352,29 @@ public sealed class MainForm : Form
         goalMessage.ForeColor = UiTheme.Green;
         goalMessage.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
         goalMessage.TextAlign = ContentAlignment.MiddleLeft;
-        UiLayout.EnableWrapping(goalMessage);
         goalMessage.Tag = "brand:goal";
+        UiLayout.BindWrappingLabel(goalMessage, 36);
         summary.Controls.Add(goalMessage, 0, 8);
     }
 
     private void AddSummaryRow(int row, string title, string key)
     {
-        var line = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, Padding = Padding.Empty, Tag = "card" };
+        var line = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2, RowCount = 1,
+            Margin = new Padding(0, 2, 0, 2), Padding = Padding.Empty, Tag = "card"
+        };
         line.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62));
         line.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38));
-        var titleLabel = new Label { Text = title, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, UseCompatibleTextRendering = true };
-        UiLayout.EnableWrapping(titleLabel);
+        var titleLabel = new Label { Text = title, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+        UiLayout.BindWrappingLabel(titleLabel, 22);
         line.Controls.Add(titleLabel, 0, 0);
         var value = new Label
         {
             Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleRight,
-            Font = new Font("Segoe UI", 9F, FontStyle.Bold), ForeColor = UiTheme.Text,
-            UseCompatibleTextRendering = true
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold), ForeColor = UiTheme.Text
         };
-        UiLayout.EnableWrapping(value);
+        UiLayout.BindWrappingLabel(value, 22);
         summaryValues[key] = value;
         line.Controls.Add(value, 1, 0);
         summary.Controls.Add(line, 0, row);
@@ -494,42 +501,40 @@ public sealed class MainForm : Form
     {
         var panel = new Panel
         {
-            Dock = DockStyle.Fill, Height = 96, Margin = new Padding(0, 0, 10, 0),
-            BackColor = UiTheme.Surface, Padding = new Padding(12), Tag = "card"
+            Dock = DockStyle.Fill, Margin = new Padding(0, 0, 10, 0),
+            BackColor = UiTheme.Surface, Padding = new Padding(12), Tag = "card",
+            MinimumSize = new Size(0, 112)
         };
         var content = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4,
+            Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, AutoSize = true,
             Margin = Padding.Empty, Padding = Padding.Empty, Tag = "card"
         };
         content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        content.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 8));
 
         var titleLabel = new Label
         {
-            Text = title, Dock = DockStyle.Fill, AutoSize = false,
-            ForeColor = UiTheme.Muted, TextAlign = ContentAlignment.MiddleLeft,
-            UseCompatibleTextRendering = true, MinimumSize = new Size(0, 20)
+            Text = title, Dock = DockStyle.Top,
+            ForeColor = UiTheme.Muted, TextAlign = ContentAlignment.MiddleLeft
         };
-        UiLayout.EnableWrapping(titleLabel);
+        UiLayout.BindWrappingLabel(titleLabel, 18);
         var valueLabel = new Label
         {
-            Dock = DockStyle.Fill, AutoSize = false, Font = new Font(Font.FontFamily, 18, FontStyle.Bold),
+            Dock = DockStyle.Top, Font = new Font(Font.FontFamily, 18, FontStyle.Bold),
             ForeColor = accent ?? UiTheme.Text, TextAlign = ContentAlignment.MiddleLeft,
-            Tag = accent is null ? null : "brand:metric-accent",
-            UseCompatibleTextRendering = true
+            Tag = accent is null ? null : "brand:metric-accent"
         };
-        UiLayout.EnableWrapping(valueLabel);
+        UiLayout.BindWrappingLabel(valueLabel, 28);
         var subtitleLabel = new Label
         {
-            Dock = DockStyle.Fill, AutoSize = false, ForeColor = UiTheme.Muted,
-            TextAlign = ContentAlignment.MiddleLeft, UseCompatibleTextRendering = true,
-            MinimumSize = new Size(0, 22)
+            Dock = DockStyle.Top, ForeColor = UiTheme.Muted,
+            TextAlign = ContentAlignment.MiddleLeft
         };
-        UiLayout.EnableWrapping(subtitleLabel);
+        UiLayout.BindWrappingLabel(subtitleLabel, 18);
         content.Controls.Add(titleLabel, 0, 0);
         content.Controls.Add(valueLabel, 0, 1);
         content.Controls.Add(subtitleLabel, 0, 2);
@@ -647,7 +652,8 @@ public sealed class MainForm : Form
             weekdayHeaders[i] = new Label
             {
                 Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter,
-                ForeColor = UiTheme.Muted, Font = weekdayFont
+                ForeColor = UiTheme.Muted, Font = weekdayFont,
+                MinimumSize = new Size(0, 28), UseCompatibleTextRendering = true
             };
             calendar.Controls.Add(weekdayHeaders[i], i, 0);
         }
@@ -660,9 +666,11 @@ public sealed class MainForm : Form
                 Margin = new Padding(2),
                 FlatStyle = FlatStyle.Flat,
                 TextAlign = ContentAlignment.TopLeft,
-                Padding = new Padding(7),
+                Padding = new Padding(6, 4, 4, 4),
                 Font = dayCellFont,
-                UseVisualStyleBackColor = false
+                UseVisualStyleBackColor = false,
+                UseCompatibleTextRendering = true,
+                AutoEllipsis = false
             };
             // Sample modifiers on MouseDown: Click fires on mouse-up, when Ctrl is often already released.
             button.MouseDown += DayButton_MouseDown;
@@ -720,6 +728,7 @@ public sealed class MainForm : Form
         if (outcome.HasExcludedAutomaticAttendance) return "Automático excluído";
         if (outcome.CountsAsPresence) return "Presencial automático";
         if (outcome.IsPlanned) return "Planejado";
+        if (outcome.IsRemoteWork) return "Trabalho remoto";
         return outcome.IsWorkingDay ? "Dia útil" : "Não útil";
     }
 
@@ -730,12 +739,14 @@ public sealed class MainForm : Form
             if (outcome.IsHoliday || outcome.Absence is not null || !outcome.IsWorkingDay) return Color.FromArgb(43, 55, 68);
             if (outcome.HasExcludedAutomaticAttendance) return Color.FromArgb(29, 43, 58);
             if (outcome.HasManualAttendance || outcome.CountsAsPresence) return Color.FromArgb(28, 66, 48);
+            if (outcome.IsRemoteWork) return Color.FromArgb(72, 52, 24);
             if (outcome.IsPlanned) return Color.FromArgb(34, 55, 88);
             return Color.FromArgb(29, 43, 58);
         }
         if (outcome.IsHoliday || outcome.Absence is not null || !outcome.IsWorkingDay) return Color.FromArgb(235, 239, 244);
         if (outcome.HasExcludedAutomaticAttendance) return UiTheme.Surface;
         if (outcome.HasManualAttendance || outcome.CountsAsPresence) return Color.FromArgb(226, 247, 234);
+        if (outcome.IsRemoteWork) return Color.FromArgb(255, 243, 224);
         if (outcome.IsPlanned) return Color.FromArgb(231, 241, 255);
         return UiTheme.Surface;
     }
@@ -986,7 +997,7 @@ public sealed class MainForm : Form
         {
             case "presence": button.BackColor = Color.FromArgb(226, 247, 234); button.ForeColor = Color.FromArgb(27, 130, 76); break;
             case "plan": button.BackColor = Color.FromArgb(231, 241, 255); button.ForeColor = Color.FromArgb(20, 100, 210); break;
-            case "absence": button.BackColor = Color.FromArgb(255, 242, 223); button.ForeColor = Color.FromArgb(177, 111, 0); break;
+            case "absence": button.BackColor = Color.FromArgb(235, 239, 244); button.ForeColor = Color.FromArgb(93, 112, 133); break;
             default: button.BackColor = Color.White; button.ForeColor = Color.FromArgb(44, 64, 87); break;
         }
         button.FlatAppearance.BorderColor = Color.FromArgb(215, 221, 229);

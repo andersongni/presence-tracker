@@ -5,7 +5,7 @@ namespace PresenceTracker;
 
 internal sealed class NonWorkingReasonForm : Form
 {
-    private readonly ComboBox reason = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+    private readonly ComboBox reason = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top };
 
     public BatchAction? SelectedAction { get; private set; }
 
@@ -14,34 +14,47 @@ internal sealed class NonWorkingReasonForm : Form
         Text = "Classificar dia não trabalhado";
         AutoScaleMode = AutoScaleMode.Dpi;
         StartPosition = FormStartPosition.CenterParent;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
+        FormBorderStyle = FormBorderStyle.Sizable;
         MinimizeBox = false;
         MaximizeBox = false;
-        Size = new Size(450, 250);
+        Size = new Size(460, 260);
         MinimumSize = new Size(420, 230);
 
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 1, RowCount = 4 };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(root);
-        root.Controls.Add(new Label
+
+        var prompt = new Label
         {
-            Text = "Qual foi o motivo do dia não trabalhado?", Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 12, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft
-        }, 0, 0);
-        root.Controls.Add(new Label { Text = "Classificação", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
+            Text = "Qual foi o motivo do dia não trabalhado?", Dock = DockStyle.Top,
+            Font = new Font("Segoe UI", 12, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 0, 0, 8)
+        };
+        UiLayout.BindWrappingLabel(prompt, 28);
+        root.Controls.Add(prompt, 0, 0);
+
+        var classification = new Label
+        {
+            Text = "Classificação", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 0, 0, 4)
+        };
+        UiLayout.BindWrappingLabel(classification, 22);
+        root.Controls.Add(classification, 0, 1);
+
         reason.Items.AddRange(new object[] { "Férias", "Day off", "Feriado", "Não trabalhado" });
         reason.SelectedIndex = 0;
+        reason.Margin = new Padding(0, 0, 0, 12);
         root.Controls.Add(reason, 0, 2);
 
         var buttons = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft,
-            WrapContents = false, Margin = Padding.Empty
+            WrapContents = true, AutoSize = true, Margin = Padding.Empty
         };
-        var apply = new Button { Text = "Aplicar", Height = 36, Tag = "primary", Padding = new Padding(14, 0, 14, 0), MinimumSize = new Size(100, 36) };
+        var apply = new Button { Text = "Aplicar", Tag = "primary", Padding = new Padding(14, 0, 14, 0), MinimumSize = new Size(100, 36) };
         UiLayout.FitButton(apply, apply.MinimumSize);
         apply.Click += (_, _) =>
         {
@@ -55,7 +68,7 @@ internal sealed class NonWorkingReasonForm : Form
             DialogResult = DialogResult.OK;
             Close();
         };
-        var cancel = new Button { Text = "Cancelar", Height = 36, DialogResult = DialogResult.Cancel, Padding = new Padding(14, 0, 14, 0), MinimumSize = new Size(100, 36) };
+        var cancel = new Button { Text = "Cancelar", DialogResult = DialogResult.Cancel, Padding = new Padding(14, 0, 14, 0), MinimumSize = new Size(100, 36) };
         UiLayout.FitButton(cancel, cancel.MinimumSize);
         buttons.Controls.Add(apply);
         buttons.Controls.Add(cancel);

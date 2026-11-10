@@ -80,25 +80,49 @@ public sealed class PresenceCalculatorTests
         {
             new AttendanceEvent { Id = 1, Date = D(2026, 6, 1), Source = AttendanceSource.Automatic, Status = AttendanceStatus.Excluded }
         };
-        var outcome = calculator.EvaluateDay(D(2026, 6, 1), WorkingDays.Weekdays, null, null, attendance, false);
+        var outcome = calculator.EvaluateDay(D(2026, 6, 1), WorkingDays.Weekdays, null, null, attendance, false, D(2026, 6, 2));
         Assert.False(outcome.CountsAsPresence);
         Assert.True(outcome.HasExcludedAutomaticAttendance);
+        Assert.False(outcome.IsRemoteWork);
     }
 
     [Fact]
     public void ManualAndAutomaticAttendanceAreDeduplicatedAndRespectAbsencePrecedence()
     {
         var date = D(2026, 6, 1);
+        var today = D(2026, 6, 2);
         var events = new[]
         {
             new AttendanceEvent { Date = date, Source = AttendanceSource.Automatic, Status = AttendanceStatus.Active },
             new AttendanceEvent { Date = date, Source = AttendanceSource.Manual, Status = AttendanceStatus.Active }
         };
         var holiday = new Holiday { Date = date, Name = "Corpus Christi", IsActive = true };
-        Assert.False(calculator.EvaluateDay(date, WorkingDays.Weekdays, holiday, null, events, false).CountsAsPresence);
+        Assert.False(calculator.EvaluateDay(date, WorkingDays.Weekdays, holiday, null, events, false, today).CountsAsPresence);
         var vacation = new DayClassification { Date = date, Type = AbsenceType.Vacation };
-        Assert.False(calculator.EvaluateDay(date, WorkingDays.Weekdays, null, vacation, events, false).CountsAsPresence);
-        Assert.True(calculator.EvaluateDay(date, WorkingDays.Weekdays, null, null, events, false).CountsAsPresence);
+        Assert.False(calculator.EvaluateDay(date, WorkingDays.Weekdays, null, vacation, events, false, today).CountsAsPresence);
+        Assert.True(calculator.EvaluateDay(date, WorkingDays.Weekdays, null, null, events, false, today).CountsAsPresence);
+    }
+
+    [Fact]
+    public void PastWorkdayWithoutPresenceIsRemoteWork()
+    {
+        var date = D(2026, 6, 1);
+        var today = D(2026, 6, 3);
+        var outcome = calculator.EvaluateDay(date, WorkingDays.Weekdays, null, null, NoAttendance, false, today);
+        Assert.True(outcome.IsRemoteWork);
+        Assert.False(outcome.CountsAsPresence);
+        Assert.Equal("Trabalho remoto", outcome.Reason);
+    }
+
+    [Fact]
+    public void TodayAndFutureWorkdaysWithoutPresenceAreNotRemoteWork()
+    {
+        var today = D(2026, 6, 3);
+        var todayOutcome = calculator.EvaluateDay(today, WorkingDays.Weekdays, null, null, NoAttendance, false, today);
+        var futureOutcome = calculator.EvaluateDay(D(2026, 6, 4), WorkingDays.Weekdays, null, null, NoAttendance, false, today);
+        Assert.False(todayOutcome.IsRemoteWork);
+        Assert.Equal("Sem presença registrada", todayOutcome.Reason);
+        Assert.False(futureOutcome.IsRemoteWork);
     }
 
     [Theory]

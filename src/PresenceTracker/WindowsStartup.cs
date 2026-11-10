@@ -16,12 +16,14 @@ internal static class WindowsStartup
     {
         using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true)
             ?? Registry.CurrentUser.CreateSubKey(RunKey, writable: true);
-        if (enabled)
-        {
-            var executable = Environment.ProcessPath ?? System.Windows.Forms.Application.ExecutablePath;
-            key.SetValue(ValueName, string.Concat((char)34, executable, (char)34, ' ', AutostartArgument));
-        }
-        else
-            key.DeleteValue(ValueName, throwOnMissingValue: false);
+
+        // Always remove first so the Run entry is fully recreated with the current
+        // executable path and --autostart (covers updates, moved installs, stale values).
+        key.DeleteValue(ValueName, throwOnMissingValue: false);
+        if (!enabled)
+            return;
+
+        var executable = Environment.ProcessPath ?? System.Windows.Forms.Application.ExecutablePath;
+        key.SetValue(ValueName, string.Concat((char)34, executable, (char)34, ' ', AutostartArgument));
     }
 }

@@ -96,7 +96,7 @@ public sealed class MonthlySnapshot
 
 public sealed record DayOutcome(DateOnly Date, bool IsWorkingDay, bool IsHoliday, string? HolidayName,
     AbsenceType? Absence, bool HasAutomaticAttendance, bool HasManualAttendance,
-    bool HasExcludedAutomaticAttendance, bool IsPlanned, bool CountsAsPresence, string Reason);
+    bool HasExcludedAutomaticAttendance, bool IsPlanned, bool CountsAsPresence, bool IsRemoteWork, string Reason);
 
 public sealed record MonthMetrics(int Year, int Month, decimal TargetPercent, int EligibleWorkingDays,
     int ElapsedWorkingDays, int RealizedDays, int RealizedThroughToday, int TargetDays, int DaysNeeded, int DaysRemaining,

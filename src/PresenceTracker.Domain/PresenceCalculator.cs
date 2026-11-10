@@ -71,7 +71,7 @@ public sealed class PresenceCalculator
     }
 
     public DayOutcome EvaluateDay(DateOnly date, WorkingDays workingDays, Holiday? holiday,
-        DayClassification? classification, IEnumerable<AttendanceEvent> events, bool isPlanned)
+        DayClassification? classification, IEnumerable<AttendanceEvent> events, bool isPlanned, DateOnly today)
     {
         var list = events.ToArray();
         var manual = list.Any(e => e.Source == AttendanceSource.Manual && e.Status == AttendanceStatus.Active);
@@ -79,13 +79,16 @@ public sealed class PresenceCalculator
         var excluded = list.Any(e => e.Source == AttendanceSource.Automatic && e.Status == AttendanceStatus.Excluded);
         var workday = IsConfiguredWorkday(date, workingDays);
         var counts = workday && holiday is null && classification is null && (manual || automatic);
+        var isRemote = date < today && workday && holiday is null && classification is null
+            && !counts && !excluded && !isPlanned;
         var reason = holiday is not null ? "Feriado" :
             classification is not null ? AbsenceLabel(classification.Type) :
             !workday ? "Dia n\u00e3o configurado como \u00fatil" :
             counts ? "Presen\u00e7a v\u00e1lida" :
-            isPlanned ? "Planejado, ainda sem resultado" : "Sem presen\u00e7a registrada";
+            isPlanned ? "Planejado, ainda sem resultado" :
+            isRemote ? "Trabalho remoto" : "Sem presen\u00e7a registrada";
         return new DayOutcome(date, workday, holiday is not null, holiday?.Name, classification?.Type,
-            automatic, manual, excluded, isPlanned, counts, reason);
+            automatic, manual, excluded, isPlanned, counts, isRemote, reason);
     }
 
     public static bool IsConfiguredWorkday(DateOnly date, WorkingDays workingDays) =>

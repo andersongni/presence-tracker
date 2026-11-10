@@ -16,13 +16,20 @@ internal sealed class DayDetailsForm : Form
         MinimumSize = new Size(560, 420);
 
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 1, RowCount = 4 };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 82));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 55));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 45));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(root);
         var result = outcome.CountsAsPresence ? "Contabilizado" : $"Não contabilizado: {outcome.Reason}";
-        root.Controls.Add(new Label { Text = $"{outcome.Reason}\n{result}", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
+        var summaryLabel = new Label
+        {
+            Text = $"{outcome.Reason}\n{result}", Dock = DockStyle.Top,
+            Font = new Font("Segoe UI", 11, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 0, 0, 8)
+        };
+        UiLayout.BindWrappingLabel(summaryLabel, 48);
+        root.Controls.Add(summaryLabel, 0, 0);
 
         var attendanceRows = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true };
         attendanceRows.SizeChanged += (_, _) => ResizeAttendanceRows(attendanceRows);
@@ -99,10 +106,10 @@ internal sealed class DayDetailsForm : Form
         var footer = new Label
         {
             Text = $"Planejamento: {(outcome.IsPlanned ? "sim" : "não")}    ·    Classificação: {outcome.Absence?.ToString() ?? "nenhuma"}",
-            Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft,
-            ForeColor = Color.FromArgb(80, 92, 107), UseCompatibleTextRendering = true
+            Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleLeft,
+            ForeColor = Color.FromArgb(80, 92, 107), Margin = new Padding(0, 8, 0, 0)
         };
-        UiLayout.EnableWrapping(footer);
+        UiLayout.BindWrappingLabel(footer, 24);
         root.Controls.Add(footer, 0, 3);
         ResizeAttendanceRows(attendanceRows);
         ResizeNetworkColumns(networkList);

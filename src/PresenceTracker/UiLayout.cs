@@ -1,7 +1,12 @@
+using System.Runtime.CompilerServices;
+
 namespace PresenceTracker;
 
 internal static class UiLayout
 {
+    private static readonly object SyncKey = new();
+    private static readonly ConditionalWeakTable<Label, LayoutBinding> Bindings = new();
+
     public static Size MeasureText(string text, Font font, int maxWidth = int.MaxValue, TextFormatFlags flags = TextFormatFlags.Default)
     {
         if (string.IsNullOrEmpty(text))
@@ -27,6 +32,7 @@ internal static class UiLayout
         button.AutoSize = true;
         button.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         button.MinimumSize = min;
+        button.UseCompatibleTextRendering = true;
         button.Size = PreferredButtonSize(button.Text, button.Font, button.Padding, min);
     }
 
@@ -35,8 +41,31 @@ internal static class UiLayout
         label.AutoSize = false;
         label.AutoEllipsis = false;
         label.MaximumSize = Size.Empty;
-        // UseCompatibleTextRendering keeps word wrap stable across DPI/Windows versions.
         label.UseCompatibleTextRendering = true;
+    }
+
+    /// <summary>
+    /// Keeps a label fully readable across DPI/Windows builds by growing its height
+    /// to fit wrapped text whenever the available width changes.
+    /// </summary>
+    public static void BindWrappingLabel(Label label, int minHeight = 0)
+    {
+        EnableWrapping(label);
+        if (Bindings.TryGetValue(label, out _))
+            return;
+
+        var binding = new LayoutBinding(label, minHeight);
+        Bindings.Add(label, binding);
+        binding.Attach();
+        binding.Relayout();
+    }
+
+    public static void FitCheckBox(CheckBox checkBox)
+    {
+        checkBox.AutoEllipsis = false;
+        checkBox.UseCompatibleTextRendering = true;
+        checkBox.AutoSize = true;
+        checkBox.MaximumSize = Size.Empty;
     }
 
     public static void ResizeListColumns(ListView list, params (float Weight, int MinWidth)[] columns)
@@ -61,5 +90,74 @@ internal static class UiLayout
         widths[^1] = Math.Max(columns[^1].MinWidth, widths[^1] + delta);
         for (var i = 0; i < widths.Length; i++)
             list.Columns[i].Width = widths[i];
+    }
+
+    private sealed class LayoutBinding(Label label, int minHeight)
+    {
+        private Control? parent;
+
+        public void Attach()
+        {
+            label.SizeChanged += (_, _) => Relayout();
+            label.TextChanged += (_, _) => Relayout();
+            label.FontChanged += (_, _) => Relayout();
+            label.ParentChanged += (_, _) => BindParent();
+            BindParent();
+        }
+
+        private void BindParent()
+        {
+            if (parent is not null)
+                parent.SizeChanged -= OnParentSizeChanged;
+            parent = label.Parent;
+            if (parent is not null)
+            {
+                parent.SizeChanged += OnParentSizeChanged;
+                Relayout();
+            }
+        }
+
+        private void OnParentSizeChanged(object? sender, EventArgs e) => Relayout();
+
+        public void Relayout()
+        {
+            if (label.IsDisposed) return;
+            lock (SyncKey)
+            {
+                var width = ResolveWidth(label);
+                if (width <= 1) return;
+
+                var measured = MeasureText(
+                    label.Text,
+                    label.Font,
+                    width,
+                    TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
+                var height = Math.Max(Math.Max(minHeight, label.Font.Height + 2), measured.Height + 2);
+                var minimum = new Size(0, height);
+                if (label.MinimumSize != minimum)
+                    label.MinimumSize = minimum;
+
+                // Dock.Fill ignores Height; MinimumSize still expands AutoSize table rows.
+                if (label.Dock is DockStyle.Top or DockStyle.Bottom or DockStyle.None)
+                {
+                    if (label.Height != height)
+                        label.Height = height;
+                }
+            }
+        }
+
+        private static int ResolveWidth(Label label)
+        {
+            if (label.ClientSize.Width > 8)
+                return label.ClientSize.Width;
+
+            if (label.Parent is null)
+                return Math.Max(1, label.Width);
+
+            var available = label.Parent.ClientSize.Width
+                - label.Parent.Padding.Horizontal
+                - label.Margin.Horizontal;
+            return Math.Max(1, available);
+        }
     }
 }

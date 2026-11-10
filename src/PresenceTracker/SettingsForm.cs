@@ -80,15 +80,19 @@ internal sealed class SettingsForm : Form
     private void BuildLayout(IDatabaseBackupService backup)
     {
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(16), ColumnCount = 1, RowCount = 3 };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 74));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(root);
-        var heading = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty };
-        heading.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-        heading.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        heading.Controls.Add(new Label { Text = "Configurações", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 18, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
-        heading.Controls.Add(new Label { Text = "Personalize metas, redes e comportamento do Presence Tracker.", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
+        var heading = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty };
+        heading.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        heading.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        var headingTitle = new Label { Text = "Configurações", Dock = DockStyle.Top, Font = new Font("Segoe UI", 18, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft };
+        UiLayout.BindWrappingLabel(headingTitle, 34);
+        var headingSubtitle = new Label { Text = "Personalize metas, redes e comportamento do Presence Tracker.", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0, 2, 0, 8) };
+        UiLayout.BindWrappingLabel(headingSubtitle, 22);
+        heading.Controls.Add(headingTitle, 0, 0);
+        heading.Controls.Add(headingSubtitle, 0, 1);
         root.Controls.Add(heading, 0, 0);
         var tabs = new TabControl
         {
@@ -109,11 +113,13 @@ internal sealed class SettingsForm : Form
         AddSettingRow(generalGrid, 0, "Meta mensal (%)", target);
         startup.Text = "Abrir o programa ao iniciar o Windows";
         startup.Checked = settings.StartWithWindows;
-        startup.AutoSize = false; startup.Dock = DockStyle.Fill; startup.TextAlign = ContentAlignment.MiddleLeft;
+        startup.Dock = DockStyle.Fill; startup.TextAlign = ContentAlignment.MiddleLeft;
+        UiLayout.FitCheckBox(startup);
         AddSettingRow(generalGrid, 1, "Com o Windows", startup);
         minimize.Text = "Minimizar para a bandeja ao fechar (não encerrar)";
         minimize.Checked = settings.MinimizeToTray;
-        minimize.AutoSize = false; minimize.Dock = DockStyle.Fill; minimize.TextAlign = ContentAlignment.MiddleLeft;
+        minimize.Dock = DockStyle.Fill; minimize.TextAlign = ContentAlignment.MiddleLeft;
+        UiLayout.FitCheckBox(minimize);
         AddSettingRow(generalGrid, 2, "Ao fechar", minimize);
         theme.DropDownStyle = ComboBoxStyle.DropDownList;
         theme.Items.AddRange(Enum.GetValues<ThemeMode>().Cast<object>().ToArray());
@@ -123,9 +129,9 @@ internal sealed class SettingsForm : Form
 
         var networkPage = new TabPage("Redes");
         var networkRoot = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(10), ColumnCount = 1, RowCount = 4 };
-        networkRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 56));
-        networkRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-        networkRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        networkRoot.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        networkRoot.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        networkRoot.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         networkRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         networkPage.Controls.Add(networkRoot);
         var networkIntervalGrid = SettingsGrid(1);
@@ -268,14 +274,19 @@ internal sealed class SettingsForm : Form
         tabs.TabPages.Add(developerPage);
 
         saveStatus.Text = "Todas as alterações são salvas automaticamente.";
-        saveStatus.Dock = DockStyle.Fill;
-        saveStatus.AutoSize = false;
-        UiLayout.EnableWrapping(saveStatus);
+        saveStatus.Dock = DockStyle.Top;
         saveStatus.TextAlign = ContentAlignment.MiddleLeft;
+        saveStatus.Margin = new Padding(0, 8, 0, 0);
+        UiLayout.BindWrappingLabel(saveStatus, 28);
         root.Controls.Add(saveStatus, 0, 2);
 
         target.ValueChanged += (_, _) => QueueSave();
-        startup.CheckedChanged += (_, _) => QueueSave();
+        startup.CheckedChanged += (_, _) =>
+        {
+            if (!initializing)
+                WindowsStartup.SetEnabled(startup.Checked);
+            QueueSave();
+        };
         minimize.CheckedChanged += (_, _) => QueueSave();
         theme.SelectedValueChanged += (_, _) => { QueueSave(); if (theme.SelectedItem is ThemeMode selected) UiTheme.Apply(this, selected); };
         retention.ValueChanged += (_, _) => QueueSave();
@@ -333,15 +344,20 @@ internal sealed class SettingsForm : Form
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 17));
-        header.Controls.Add(new Label { Text = "SSID", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 9, FontStyle.Bold), UseCompatibleTextRendering = true }, 0, 0);
+        var ssidHeader = new Label { Text = "SSID", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 9, FontStyle.Bold) };
+        UiLayout.BindWrappingLabel(ssidHeader, 22);
+        header.Controls.Add(ssidHeader, 0, 0);
         var presenceHeader = new Label
         {
             Text = "Considerar presencial", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft,
-            Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), UseCompatibleTextRendering = true
+            Font = new Font("Segoe UI", 8.5F, FontStyle.Bold)
         };
-        UiLayout.EnableWrapping(presenceHeader);
+        UiLayout.BindWrappingLabel(presenceHeader, 22);
         header.Controls.Add(presenceHeader, 1, 0);
-        header.Controls.Add(new Label { Text = "Ação", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter, Font = new Font("Segoe UI", 9, FontStyle.Bold), UseCompatibleTextRendering = true }, 2, 0);
+        var actionHeader = new Label { Text = "Ação", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter, Font = new Font("Segoe UI", 9, FontStyle.Bold) };
+        UiLayout.BindWrappingLabel(actionHeader, 22);
+        header.Controls.Add(actionHeader, 2, 0);
+        header.MinimumSize = new Size(0, 36);
         return header;
     }
 
@@ -653,17 +669,14 @@ internal sealed class SettingsForm : Form
         var labelControl = new Label
         {
             Text = label, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft,
-            UseCompatibleTextRendering = true, MinimumSize = new Size(0, 40), Margin = new Padding(0, 4, 8, 4)
+            Margin = new Padding(0, 4, 8, 4)
         };
-        UiLayout.EnableWrapping(labelControl);
+        UiLayout.BindWrappingLabel(labelControl, 28);
         grid.Controls.Add(labelControl, 0, row);
         control.Dock = control is CheckBox or TableLayoutPanel ? DockStyle.Fill : DockStyle.Left;
         control.Margin = new Padding(0, 4, 0, 4);
         if (control is CheckBox check)
-        {
-            check.AutoSize = false;
-            check.UseCompatibleTextRendering = true;
-        }
+            UiLayout.FitCheckBox(check);
         grid.Controls.Add(control, 1, row);
     }
 
@@ -869,7 +882,8 @@ internal sealed class HolidayEditorForm : Form
         scope.SelectedItem = holiday.Scope;
         active.Text = "Ativo"; active.Checked = holiday.IsActive;
         AddField(grid, 0, "Nome", name); AddField(grid, 1, "Data", date); AddField(grid, 2, "Escopo", scope); AddField(grid, 3, "Status", active);
-        var note = new Label { Text = "As alterações são gravadas automaticamente.", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+        var note = new Label { Text = "As alterações são gravadas automaticamente.", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleLeft };
+        UiLayout.BindWrappingLabel(note, 22);
         grid.Controls.Add(note, 0, 4); grid.SetColumnSpan(note, 2);
         debounce.Interval = 300;
         debounce.Tick += async (_, _) => { debounce.Stop(); await PersistAsync(); };
@@ -903,9 +917,9 @@ internal sealed class HolidayEditorForm : Form
         var labelControl = new Label
         {
             Text = label, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft,
-            UseCompatibleTextRendering = true, MinimumSize = new Size(0, 36), Margin = new Padding(0, 4, 8, 4)
+            Margin = new Padding(0, 4, 8, 4)
         };
-        UiLayout.EnableWrapping(labelControl);
+        UiLayout.BindWrappingLabel(labelControl, 28);
         grid.Controls.Add(labelControl, 0, row);
         control.Dock = DockStyle.Fill;
         control.Margin = new Padding(0, 4, 0, 4);
