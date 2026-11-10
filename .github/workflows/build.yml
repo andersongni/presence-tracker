@@ -97,3 +97,24 @@ jobs:
           replacesArtifacts: true
           makeLatest: true
           omitBodyDuringUpdate: false
+
+      # If a versioned release (e.g. v1.0) was marked as GitHub "Latest", sync the
+      # installer there too so /releases/latest always exposes .exe and .zip.
+      - name: Sync installer to GitHub latest release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $repo = "${{ github.repository }}"
+          $latestTag = gh api "repos/$repo/releases/latest" --jq .tag_name
+          if (-not $latestTag) { throw "Não foi possível resolver a release latest." }
+          Write-Host "GitHub latest release tag: $latestTag"
+          if ($latestTag -eq "latest") {
+            Write-Host "Rolling tag already owns latest; nothing to sync."
+            exit 0
+          }
+          gh release upload $latestTag `
+            artifacts/installer/PresenceTracker-Setup.exe `
+            artifacts/installer/PresenceTracker-Setup.zip `
+            --clobber
+          Write-Host "Installer synced to release $latestTag."
