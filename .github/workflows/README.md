@@ -11,6 +11,7 @@ O arquivo `build.yml` é responsável por:
 - Rodar regressão de backup/restore (`SqliteBackupServiceTests`)
 - Publicar o binário self-contained usado pelo setup
 - Compilar o instalador gráfico com Inno Setup (`PresenceTracker-Setup.exe`)
-- Publicar o instalador como asset da release `Latest` (download direto do `.exe`, sem ZIP)
+- Empacotar o mesmo instalador em `PresenceTracker-Setup.zip` (fallback se o navegador bloquear `.exe`)
+- Publicar `.exe` e `.zip` como assets da release `Latest`, com links de download no corpo da release
 
 O download fica em: https://github.com/andersongni/presence-tracker/releases/latest

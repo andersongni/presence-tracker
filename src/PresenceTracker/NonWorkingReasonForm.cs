@@ -41,7 +41,8 @@ internal sealed class NonWorkingReasonForm : Form
             Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft,
             WrapContents = false, Margin = Padding.Empty
         };
-        var apply = new Button { Text = "Aplicar", Width = 100, Height = 36, Tag = "primary" };
+        var apply = new Button { Text = "Aplicar", Height = 36, Tag = "primary", Padding = new Padding(14, 0, 14, 0), MinimumSize = new Size(100, 36) };
+        UiLayout.FitButton(apply, apply.MinimumSize);
         apply.Click += (_, _) =>
         {
             SelectedAction = reason.SelectedIndex switch
@@ -54,7 +55,8 @@ internal sealed class NonWorkingReasonForm : Form
             DialogResult = DialogResult.OK;
             Close();
         };
-        var cancel = new Button { Text = "Cancelar", Width = 100, Height = 36, DialogResult = DialogResult.Cancel };
+        var cancel = new Button { Text = "Cancelar", Height = 36, DialogResult = DialogResult.Cancel, Padding = new Padding(14, 0, 14, 0), MinimumSize = new Size(100, 36) };
+        UiLayout.FitButton(cancel, cancel.MinimumSize);
         buttons.Controls.Add(apply);
         buttons.Controls.Add(cancel);
         root.Controls.Add(buttons, 0, 3);

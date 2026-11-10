@@ -68,14 +68,32 @@ jobs:
           & $iscc installer/PresenceTracker.iss
           if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar o instalador (código $LASTEXITCODE)." }
 
+      - name: Package installer ZIP fallback
+        shell: pwsh
+        run: |
+          $exe = "artifacts/installer/PresenceTracker-Setup.exe"
+          $zip = "artifacts/installer/PresenceTracker-Setup.zip"
+          if (-not (Test-Path $exe)) { throw "Instalador não encontrado: $exe" }
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path $exe -DestinationPath $zip -Force
+          Get-Item $exe, $zip | Format-Table Name, Length
+
       - name: Publish installer to GitHub Releases
         uses: ncipollo/release-action@v1
         with:
           tag: latest
           name: Latest
-          body: Instalador gerado automaticamente a partir de main.
-          artifacts: artifacts/installer/PresenceTracker-Setup.exe
+          body: |
+            ## Download
+
+            - **[PresenceTracker-Setup.exe](https://github.com/andersongni/presence-tracker/releases/download/latest/PresenceTracker-Setup.exe)** — instalador Windows (recomendado)
+            - **[PresenceTracker-Setup.zip](https://github.com/andersongni/presence-tracker/releases/download/latest/PresenceTracker-Setup.zip)** — alternativa se o navegador bloquear o download do `.exe` (baixe o ZIP, extraia e execute o instalador)
+
+            Instalador gerado automaticamente a partir de `main`.
+          artifacts: |
+            artifacts/installer/PresenceTracker-Setup.exe
+            artifacts/installer/PresenceTracker-Setup.zip
           allowUpdates: true
           replacesArtifacts: true
           makeLatest: true
-          omitBodyDuringUpdate: true
+          omitBodyDuringUpdate: false

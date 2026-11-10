@@ -90,7 +90,13 @@ internal sealed class SettingsForm : Form
         heading.Controls.Add(new Label { Text = "Configurações", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 18, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
         heading.Controls.Add(new Label { Text = "Personalize metas, redes e comportamento do Presence Tracker.", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 1);
         root.Controls.Add(heading, 0, 0);
-        var tabs = new TabControl { Dock = DockStyle.Fill, Appearance = TabAppearance.FlatButtons, SizeMode = TabSizeMode.Fixed, ItemSize = new Size(112, 32) };
+        var tabs = new TabControl
+        {
+            Dock = DockStyle.Fill,
+            Appearance = TabAppearance.FlatButtons,
+            SizeMode = TabSizeMode.Normal,
+            Padding = new Point(14, 6)
+        };
         root.Controls.Add(tabs, 0, 1);
 
         var general = new TabPage("Geral");
@@ -264,7 +270,7 @@ internal sealed class SettingsForm : Form
         saveStatus.Text = "Todas as alterações são salvas automaticamente.";
         saveStatus.Dock = DockStyle.Fill;
         saveStatus.AutoSize = false;
-        saveStatus.AutoEllipsis = true;
+        UiLayout.EnableWrapping(saveStatus);
         saveStatus.TextAlign = ContentAlignment.MiddleLeft;
         root.Controls.Add(saveStatus, 0, 2);
 
@@ -327,9 +333,15 @@ internal sealed class SettingsForm : Form
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 17));
-        header.Controls.Add(new Label { Text = "SSID", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 0);
-        header.Controls.Add(new Label { Text = "Considerar presencial", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), AutoEllipsis = true }, 1, 0);
-        header.Controls.Add(new Label { Text = "Ação", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 2, 0);
+        header.Controls.Add(new Label { Text = "SSID", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 9, FontStyle.Bold), UseCompatibleTextRendering = true }, 0, 0);
+        var presenceHeader = new Label
+        {
+            Text = "Considerar presencial", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), UseCompatibleTextRendering = true
+        };
+        UiLayout.EnableWrapping(presenceHeader);
+        header.Controls.Add(presenceHeader, 1, 0);
+        header.Controls.Add(new Label { Text = "Ação", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter, Font = new Font("Segoe UI", 9, FontStyle.Bold), UseCompatibleTextRendering = true }, 2, 0);
         return header;
     }
 
@@ -629,16 +641,29 @@ internal sealed class SettingsForm : Form
     private static TableLayoutPanel SettingsGrid(int rowCount = 8)
     {
         var grid = new TableLayoutPanel { Dock = DockStyle.Top, Padding = new Padding(14), ColumnCount = 2, RowCount = rowCount, AutoSize = true };
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        for (var i = 0; i < rowCount; i++) grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 66));
+        for (var i = 0; i < rowCount; i++) grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        grid.MinimumSize = new Size(0, rowCount * 44);
         return grid;
     }
 
     private static void AddSettingRow(TableLayoutPanel grid, int row, string label, Control control)
     {
-        grid.Controls.Add(new Label { Text = label, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, row);
+        var labelControl = new Label
+        {
+            Text = label, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft,
+            UseCompatibleTextRendering = true, MinimumSize = new Size(0, 40), Margin = new Padding(0, 4, 8, 4)
+        };
+        UiLayout.EnableWrapping(labelControl);
+        grid.Controls.Add(labelControl, 0, row);
         control.Dock = control is CheckBox or TableLayoutPanel ? DockStyle.Fill : DockStyle.Left;
+        control.Margin = new Padding(0, 4, 0, 4);
+        if (control is CheckBox check)
+        {
+            check.AutoSize = false;
+            check.UseCompatibleTextRendering = true;
+        }
         grid.Controls.Add(control, 1, row);
     }
 
@@ -654,7 +679,8 @@ internal sealed class SettingsForm : Form
     private static PresenceNetwork CloneNetwork(PresenceNetwork n) => new() { Id = n.Id, Ssid = n.Ssid, IsActive = n.IsActive, CountsAsPresence = n.CountsAsPresence };
     private static Button Button(string label, EventHandler onClick)
     {
-        var b = new Button { Text = label, AutoSize = true, Height = 36, Padding = new Padding(10, 0, 10, 0) };
+        var b = new Button { Text = label, Padding = new Padding(12, 0, 12, 0), MinimumSize = new Size(88, 36) };
+        UiLayout.FitButton(b, b.MinimumSize);
         if (label.StartsWith("Adicionar", StringComparison.Ordinal) || label.StartsWith("Sincronizar", StringComparison.Ordinal))
             b.Tag = "primary";
         b.Click += onClick;
@@ -699,11 +725,11 @@ internal sealed class HolidayManagementForm : Form
         Size = new Size(760, 580);
         MinimumSize = new Size(640, 460);
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(18), ColumnCount = 1, RowCount = 3 };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(root);
-        var bar = new FlowLayoutPanel { Dock = DockStyle.Fill };
+        var bar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, WrapContents = true };
         bar.Controls.Add(Button("Adicionar", async (_, _) => await AddHolidayAsync()));
         bar.Controls.Add(Button("Editar", (_, _) => EditSelected()));
         bar.Controls.Add(Button("Remover", async (_, _) => await RemoveSelectedAsync()));
@@ -729,16 +755,12 @@ internal sealed class HolidayManagementForm : Form
         resizingColumns = true;
         try
         {
-            var dateWidth = 100;
-            var scopeWidth = 100;
-            var sourceWidth = 100;
-            var activeWidth = 55;
-            var nameWidth = Math.Max(150, list.ClientSize.Width - dateWidth - scopeWidth - sourceWidth - activeWidth - SystemInformation.VerticalScrollBarWidth - 8);
-            list.Columns[0].Width = dateWidth;
-            list.Columns[1].Width = nameWidth;
-            list.Columns[2].Width = scopeWidth;
-            list.Columns[3].Width = sourceWidth;
-            list.Columns[4].Width = activeWidth;
+            UiLayout.ResizeListColumns(list,
+                (Weight: 0.16f, MinWidth: 90),
+                (Weight: 0.40f, MinWidth: 140),
+                (Weight: 0.16f, MinWidth: 90),
+                (Weight: 0.16f, MinWidth: 90),
+                (Weight: 0.12f, MinWidth: 55));
         }
         finally
         {
@@ -808,7 +830,8 @@ internal sealed class HolidayManagementForm : Form
 
     private static Button Button(string text, EventHandler click)
     {
-        var button = new Button { Text = text, AutoSize = true, Height = 36, Padding = new Padding(10, 0, 10, 0) };
+        var button = new Button { Text = text, Padding = new Padding(12, 0, 12, 0), MinimumSize = new Size(88, 36) };
+        UiLayout.FitButton(button, button.MinimumSize);
         if (text.StartsWith("Adicionar", StringComparison.Ordinal) || text.StartsWith("Sincronizar", StringComparison.Ordinal))
             button.Tag = "primary";
         button.Click += click;
@@ -835,9 +858,9 @@ internal sealed class HolidayEditorForm : Form
         StartPosition = FormStartPosition.CenterParent;
         Size = new Size(460, 280);
         var grid = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 2, RowCount = 5 };
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105));
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        for (var i = 0; i < 5; i++) grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 72));
+        for (var i = 0; i < 5; i++) grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(grid);
         name.Text = holiday.Name;
         date.Value = holiday.Date.ToDateTime(TimeOnly.MinValue);
@@ -877,8 +900,16 @@ internal sealed class HolidayEditorForm : Form
 
     private static void AddField(TableLayoutPanel grid, int row, string label, Control control)
     {
-        grid.Controls.Add(new Label { Text = label, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, row);
-        control.Dock = DockStyle.Fill; grid.Controls.Add(control, 1, row);
+        var labelControl = new Label
+        {
+            Text = label, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft,
+            UseCompatibleTextRendering = true, MinimumSize = new Size(0, 36), Margin = new Padding(0, 4, 8, 4)
+        };
+        UiLayout.EnableWrapping(labelControl);
+        grid.Controls.Add(labelControl, 0, row);
+        control.Dock = DockStyle.Fill;
+        control.Margin = new Padding(0, 4, 0, 4);
+        grid.Controls.Add(control, 1, row);
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
@@ -901,7 +932,8 @@ internal sealed class YearPickerForm : Form
         var panel = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(16), FlowDirection = FlowDirection.TopDown, WrapContents = false };
         panel.Controls.Add(new Label { Text = "Ano dos feriados:", AutoSize = true });
         panel.Controls.Add(year);
-        var button = new Button { Text = "Sincronizar", DialogResult = DialogResult.OK, Width = 110, Tag = "primary" };
+        var button = new Button { Text = "Sincronizar", DialogResult = DialogResult.OK, Tag = "primary", Padding = new Padding(12, 0, 12, 0), MinimumSize = new Size(110, 36) };
+        UiLayout.FitButton(button, button.MinimumSize);
         panel.Controls.Add(button); AcceptButton = button; Controls.Add(panel);
         UiTheme.Apply(this, theme);
     }

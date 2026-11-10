@@ -32,8 +32,10 @@ internal sealed class DayDetailsForm : Form
             var label = new Label
             {
                 Text = AttendanceDescription(item),
-                Location = new Point(4, 8), Width = 400, Height = 26, TextAlign = ContentAlignment.MiddleLeft
+                Location = new Point(4, 8), Width = 400, Height = 26, TextAlign = ContentAlignment.MiddleLeft,
+                UseCompatibleTextRendering = true
             };
+            UiLayout.EnableWrapping(label);
             row.Controls.Add(label);
             if (item.Source == AttendanceSource.Automatic)
             {
@@ -97,9 +99,10 @@ internal sealed class DayDetailsForm : Form
         var footer = new Label
         {
             Text = $"Planejamento: {(outcome.IsPlanned ? "sim" : "não")}    ·    Classificação: {outcome.Absence?.ToString() ?? "nenhuma"}",
-            Dock = DockStyle.Fill, AutoSize = false, AutoEllipsis = true, TextAlign = ContentAlignment.MiddleLeft,
-            ForeColor = Color.FromArgb(80, 92, 107)
+            Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft,
+            ForeColor = Color.FromArgb(80, 92, 107), UseCompatibleTextRendering = true
         };
+        UiLayout.EnableWrapping(footer);
         root.Controls.Add(footer, 0, 3);
         ResizeAttendanceRows(attendanceRows);
         ResizeNetworkColumns(networkList);
@@ -123,23 +126,26 @@ internal sealed class DayDetailsForm : Form
                 continue;
             }
 
-            action.Location = new Point(rowWidth - action.Width - 4, 8);
+            action.Location = new Point(rowWidth - action.PreferredSize.Width - 4, 8);
             if (label is not null)
+            {
                 label.Width = Math.Max(100, action.Left - 12);
+                var needed = UiLayout.MeasureText(label.Text, label.Font, label.Width,
+                    TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
+                label.Height = Math.Max(26, needed.Height);
+                row.Height = Math.Max(42, label.Height + 16);
+                action.Top = Math.Max(8, (row.Height - action.Height) / 2);
+            }
         }
     }
 
     private static void ResizeNetworkColumns(ListView list)
     {
-        if (list.Columns.Count != 4) return;
-        var timeWidth = 90;
-        var eventWidth = 100;
-        var available = Math.Max(170, list.ClientSize.Width - timeWidth - eventWidth - SystemInformation.VerticalScrollBarWidth - 8);
-        var ssidWidth = Math.Min(150, available / 2);
-        list.Columns[0].Width = timeWidth;
-        list.Columns[1].Width = ssidWidth;
-        list.Columns[2].Width = eventWidth;
-        list.Columns[3].Width = Math.Max(100, available - ssidWidth);
+        UiLayout.ResizeListColumns(list,
+            (Weight: 0.18f, MinWidth: 80),
+            (Weight: 0.28f, MinWidth: 100),
+            (Weight: 0.22f, MinWidth: 90),
+            (Weight: 0.32f, MinWidth: 100));
     }
 }
 

@@ -135,7 +135,7 @@ public sealed class MainForm : Form
 
         var header = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         var monthNavigation = new FlowLayoutPanel
         {
             Dock = DockStyle.Left, AutoSize = true, WrapContents = false,
@@ -144,11 +144,10 @@ public sealed class MainForm : Form
         var previousMonth = CreateButton("‹", (_, _) => ShiftMonth(-1), 44);
         previousMonth.AccessibleName = "Mês anterior";
         monthLabel.Font = new Font(Font.FontFamily, 16, FontStyle.Bold);
-        monthLabel.Width = 260;
-        monthLabel.Height = 38;
-        monthLabel.Margin = new Padding(8, 0, 8, 0);
-        monthLabel.AutoSize = false;
+        monthLabel.AutoSize = true;
         monthLabel.AutoEllipsis = false;
+        monthLabel.Margin = new Padding(8, 0, 8, 0);
+        monthLabel.MinimumSize = new Size(120, 38);
         monthLabel.TextAlign = ContentAlignment.MiddleLeft;
         var nextMonth = CreateButton("›", (_, _) => ShiftMonth(1), 44);
         nextMonth.AccessibleName = "Próximo mês";
@@ -156,7 +155,9 @@ public sealed class MainForm : Form
         monthNavigation.Controls.Add(monthLabel);
         monthNavigation.Controls.Add(nextMonth);
         header.Controls.Add(monthNavigation, 0, 0);
-        header.Controls.Add(CreateButton("Hoje", (_, _) => ShowCurrentMonth(), 72), 1, 0);
+        var todayButton = CreateButton("Hoje", (_, _) => ShowCurrentMonth());
+        todayButton.Margin = new Padding(8, 0, 0, 0);
+        header.Controls.Add(todayButton, 1, 0);
         root.Controls.Add(header, 0, 0);
 
         metricCards.Dock = DockStyle.Fill;
@@ -176,12 +177,15 @@ public sealed class MainForm : Form
         actions.Margin = new Padding(0, 0, 0, 5);
         actions.Controls.Add(ActionButton("Presencial manual", BatchAction.ManualPresence));
         actions.Controls.Add(ActionButton("Planejar", BatchAction.PlanPresence));
-        var nonWorkingButton = CreateActionButton("Não trabalhado", ChooseNonWorkingReasonAsync, 130);
+        var nonWorkingButton = CreateActionButton("Não trabalhado", ChooseNonWorkingReasonAsync);
         SetButtonTone(nonWorkingButton, "absence");
         actions.Controls.Add(nonWorkingButton);
         actions.Controls.Add(ActionButton("Restaurar padrão", BatchAction.RestoreDefaults));
-        var dayDetailsButton = CreateButton("Detalhes do dia", (_, _) => ShowSelectedDayDetails(), 136);
+        var dayDetailsButton = CreateButton("Detalhes do dia", (_, _) => ShowSelectedDayDetails());
         dayDetailsButton.AccessibleName = "Detalhes do dia selecionado";
+        dayDetailsButton.Margin = new Padding(0, 4, 6, 4);
+        dayDetailsButton.MinimumSize = new Size(96, 40);
+        dayDetailsButton.Height = 40;
         actions.Controls.Add(dayDetailsButton);
         root.Controls.Add(actions, 0, 2);
 
@@ -229,13 +233,22 @@ public sealed class MainForm : Form
         brand.Controls.Add(logo);
         var brandTitle = new Label
         {
-            Text = "Presence Tracker", Location = new Point(2, 52), Size = new Size(174, 32),
+            Text = "Presence Tracker", Location = new Point(2, 52),
             Font = new Font("Segoe UI", 12, FontStyle.Bold), ForeColor = Color.White, Tag = "brand:sidebar",
             AutoSize = false, AutoEllipsis = false, TextAlign = ContentAlignment.MiddleLeft,
-            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+            UseCompatibleTextRendering = true
         };
         brand.Controls.Add(brandTitle);
-        brand.SizeChanged += (_, _) => brandTitle.Width = Math.Max(0, brand.ClientSize.Width - brandTitle.Left - 2);
+        void ResizeBrandTitle()
+        {
+            brandTitle.Width = Math.Max(0, brand.ClientSize.Width - brandTitle.Left - 2);
+            var needed = UiLayout.MeasureText(brandTitle.Text, brandTitle.Font, brandTitle.Width,
+                TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
+            brandTitle.Height = Math.Max(32, needed.Height + 4);
+        }
+        brand.SizeChanged += (_, _) => ResizeBrandTitle();
+        ResizeBrandTitle();
         sidebar.Controls.Add(brand, 0, 0);
 
         var navigation = new FlowLayoutPanel
@@ -267,13 +280,15 @@ public sealed class MainForm : Form
     {
         var button = new Button
         {
-            Text = title, Width = 182, Height = 42, Margin = new Padding(0, 2, 0, 5),
-            TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(12, 0, 4, 0),
+            Text = title, AutoSize = false, Height = 42, Margin = new Padding(0, 2, 0, 5),
+            TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(12, 0, 8, 0),
             FlatStyle = FlatStyle.Flat, BackColor = section == "Calendário" ? UiTheme.Blue : UiTheme.Navy,
             ForeColor = Color.White, Font = new Font("Segoe UI", 9F), Cursor = Cursors.Hand,
-            Tag = $"brand:nav:{section}"
+            Tag = $"brand:nav:{section}",
+            MinimumSize = new Size(0, 42)
         };
         button.FlatAppearance.BorderSize = 0;
+        button.UseCompatibleTextRendering = true;
         button.Click += (_, _) =>
         {
             SetActiveNavigation(section);
@@ -315,8 +330,9 @@ public sealed class MainForm : Form
         for (var i = 0; i < 5; i++) summary.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         summary.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         summary.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        summary.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
-        var heading = new Label { Text = "Resumo do mês", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft };
+        summary.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        var heading = new Label { Text = "Resumo do mês", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft, UseCompatibleTextRendering = true };
+        UiLayout.EnableWrapping(heading);
         summary.Controls.Add(heading, 0, 0);
         AddSummaryRow(1, "Dias úteis", "workdays");
         AddSummaryRow(2, "Presenças realizadas", "realized");
@@ -332,7 +348,7 @@ public sealed class MainForm : Form
         goalMessage.ForeColor = UiTheme.Green;
         goalMessage.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
         goalMessage.TextAlign = ContentAlignment.MiddleLeft;
-        goalMessage.AutoEllipsis = true;
+        UiLayout.EnableWrapping(goalMessage);
         goalMessage.Tag = "brand:goal";
         summary.Controls.Add(goalMessage, 0, 8);
     }
@@ -340,10 +356,18 @@ public sealed class MainForm : Form
     private void AddSummaryRow(int row, string title, string key)
     {
         var line = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, Padding = Padding.Empty, Tag = "card" };
-        line.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 68));
-        line.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
-        line.Controls.Add(new Label { Text = title, Dock = DockStyle.Fill, AutoEllipsis = true, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
-        var value = new Label { Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Segoe UI", 9F, FontStyle.Bold), ForeColor = UiTheme.Text };
+        line.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62));
+        line.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38));
+        var titleLabel = new Label { Text = title, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, UseCompatibleTextRendering = true };
+        UiLayout.EnableWrapping(titleLabel);
+        line.Controls.Add(titleLabel, 0, 0);
+        var value = new Label
+        {
+            Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleRight,
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold), ForeColor = UiTheme.Text,
+            UseCompatibleTextRendering = true
+        };
+        UiLayout.EnableWrapping(value);
         summaryValues[key] = value;
         line.Controls.Add(value, 1, 0);
         summary.Controls.Add(line, 0, row);
@@ -390,7 +414,6 @@ public sealed class MainForm : Form
 
             var monthTitle = requestedMonth.ToDateTime(TimeOnly.MinValue).ToString("MMMM yyyy", new CultureInfo("pt-BR"));
             monthLabel.Text = new CultureInfo("pt-BR").TextInfo.ToTitleCase(monthTitle);
-            monthLabel.Width = Math.Max(180, TextRenderer.MeasureText(monthLabel.Text, monthLabel.Font).Width + 20);
 
             SetRedraw(calendar, false);
             SetRedraw(metricCards, false);
@@ -480,27 +503,33 @@ public sealed class MainForm : Form
             Margin = Padding.Empty, Padding = Padding.Empty, Tag = "card"
         };
         content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
-        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
+        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        content.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 8));
 
         var titleLabel = new Label
         {
             Text = title, Dock = DockStyle.Fill, AutoSize = false,
-            ForeColor = UiTheme.Muted, TextAlign = ContentAlignment.MiddleLeft
+            ForeColor = UiTheme.Muted, TextAlign = ContentAlignment.MiddleLeft,
+            UseCompatibleTextRendering = true, MinimumSize = new Size(0, 20)
         };
+        UiLayout.EnableWrapping(titleLabel);
         var valueLabel = new Label
         {
             Dock = DockStyle.Fill, AutoSize = false, Font = new Font(Font.FontFamily, 18, FontStyle.Bold),
             ForeColor = accent ?? UiTheme.Text, TextAlign = ContentAlignment.MiddleLeft,
-            Tag = accent is null ? null : "brand:metric-accent"
+            Tag = accent is null ? null : "brand:metric-accent",
+            UseCompatibleTextRendering = true
         };
+        UiLayout.EnableWrapping(valueLabel);
         var subtitleLabel = new Label
         {
             Dock = DockStyle.Fill, AutoSize = false, ForeColor = UiTheme.Muted,
-            AutoEllipsis = true, TextAlign = ContentAlignment.MiddleLeft
+            TextAlign = ContentAlignment.MiddleLeft, UseCompatibleTextRendering = true,
+            MinimumSize = new Size(0, 22)
         };
+        UiLayout.EnableWrapping(subtitleLabel);
         content.Controls.Add(titleLabel, 0, 0);
         content.Controls.Add(valueLabel, 0, 1);
         content.Controls.Add(subtitleLabel, 0, 2);
@@ -730,7 +759,7 @@ public sealed class MainForm : Form
 
     private Button ActionButton(string title, BatchAction action)
     {
-        var button = CreateActionButton(title, () => ApplyActionAsync(action), 100);
+        var button = CreateActionButton(title, () => ApplyActionAsync(action));
         SetButtonTone(button, action switch
         {
             BatchAction.ManualPresence => "presence",
@@ -740,15 +769,14 @@ public sealed class MainForm : Form
         return button;
     }
 
-    private Button CreateActionButton(string title, Func<Task> action, int width)
+    private Button CreateActionButton(string title, Func<Task> action)
     {
-        var button = CreateButton(title, async (_, _) => await action(), width);
-        button.AutoSize = true;
-        button.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        var button = CreateButton(title, async (_, _) => await action());
+        button.Padding = new Padding(10, 0, 10, 0);
         button.MinimumSize = new Size(96, 40);
-        button.Padding = new Padding(8, 0, 8, 0);
-        button.Height = 40;
         button.Margin = new Padding(0, 4, 6, 4);
+        UiLayout.FitButton(button, button.MinimumSize);
+        button.Height = Math.Max(40, button.Height);
         return button;
     }
 
@@ -924,9 +952,28 @@ public sealed class MainForm : Form
         }
     }
 
-    private static Button CreateButton(string text, EventHandler handler, int width)
+    private static Button CreateButton(string text, EventHandler handler, int? width = null)
     {
-        var button = new RoundedButton { Text = text, Width = width, Height = 38, FlatStyle = FlatStyle.Flat, BackColor = Color.White, ForeColor = Color.FromArgb(44, 64, 87), Cursor = Cursors.Hand, Tag = "action:neutral" };
+        var button = new RoundedButton
+        {
+            Text = text,
+            FlatStyle = FlatStyle.Flat,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(44, 64, 87),
+            Cursor = Cursors.Hand,
+            Tag = "action:neutral",
+            Padding = new Padding(8, 0, 8, 0),
+            MinimumSize = new Size(width ?? 72, 38)
+        };
+        if (width is { } fixedWidth)
+        {
+            button.AutoSize = false;
+            button.Size = new Size(fixedWidth, 38);
+        }
+        else
+        {
+            UiLayout.FitButton(button, button.MinimumSize);
+        }
         button.FlatAppearance.BorderColor = Color.FromArgb(215, 221, 229);
         button.Click += handler;
         return button;
@@ -949,6 +996,19 @@ public sealed class MainForm : Form
     {
         public RoundedButton() => SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
 
+        public override Size GetPreferredSize(Size proposedSize)
+        {
+            var minimum = MinimumSize.IsEmpty ? new Size(72, 38) : MinimumSize;
+            return UiLayout.PreferredButtonSize(Text, Font, Padding, minimum);
+        }
+
+        protected override void OnTextChanged(EventArgs e)
+        {
+            base.OnTextChanged(e);
+            if (AutoSize)
+                Size = GetPreferredSize(Size.Empty);
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
@@ -970,9 +1030,14 @@ public sealed class MainForm : Form
             using var border = new Pen(borderColor, 1F);
             e.Graphics.FillPath(fill, path);
             e.Graphics.DrawPath(border, path);
-            var textBounds = Rectangle.Inflate(bounds, -Padding.Horizontal / 2 - 4, -Padding.Vertical / 2);
-            TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, Enabled ? ForeColor : SystemColors.GrayText,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
+            var textBounds = Rectangle.Inflate(bounds, -Math.Max(4, Padding.Horizontal / 2), -Math.Max(2, Padding.Vertical / 2));
+            TextRenderer.DrawText(
+                e.Graphics,
+                Text,
+                Font,
+                textBounds,
+                Enabled ? ForeColor : SystemColors.GrayText,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl | TextFormatFlags.NoPrefix);
         }
     }
 

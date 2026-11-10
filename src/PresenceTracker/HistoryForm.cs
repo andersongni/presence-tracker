@@ -26,12 +26,19 @@ internal sealed class HistoryForm : Form
         root.Controls.Add(list, 0, 1);
         var footerPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
         footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
-        var footer = new Label { Dock = DockStyle.Fill, AutoSize = false, AutoEllipsis = true, TextAlign = ContentAlignment.MiddleLeft };
-        var older = new Button { Text = "Meses anteriores…", Dock = DockStyle.Fill };
+        footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        var footer = new Label { Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, UseCompatibleTextRendering = true };
+        UiLayout.EnableWrapping(footer);
+        var older = new Button { Text = "Meses anteriores…", Dock = DockStyle.Fill, Padding = new Padding(12, 0, 12, 0), MinimumSize = new Size(140, 36) };
+        UiLayout.FitButton(older, older.MinimumSize);
         footerPanel.Controls.Add(footer, 0, 0);
         footerPanel.Controls.Add(older, 1, 0);
         root.Controls.Add(footerPanel, 0, 2);
+        list.SizeChanged += (_, _) => UiLayout.ResizeListColumns(list,
+            (Weight: 0.34f, MinWidth: 120),
+            (Weight: 0.22f, MinWidth: 90),
+            (Weight: 0.22f, MinWidth: 90),
+            (Weight: 0.22f, MinWidth: 80));
         var offset = 1;
         var percentages = new List<decimal>();
         async Task LoadOlderAsync()
